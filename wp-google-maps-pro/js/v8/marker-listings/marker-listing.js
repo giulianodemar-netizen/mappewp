@@ -48,8 +48,11 @@ jQuery(function($) {
 		});
 		
 		if(map.settings.wpgmza_store_locator_hide_before_search == 1) {
+			console.log('[WPGMZA] Marker listing initialized with hide_before_search enabled - will NOT load all markers initially');
 			this.showOnFilteringComplete = true;
 			$(this.element).hide();
+		} else {
+			console.log('[WPGMZA] Marker listing initialized - will load all markers');
 		}
 
 		
@@ -77,7 +80,11 @@ jQuery(function($) {
 			
 		});
 		
-		this.reload();
+		// Only load markers initially if hide_before_search is not enabled
+		// With hide_before_search, the listing will load on first search via onFilteringComplete
+		if(!map.settings.wpgmza_store_locator_hide_before_search) {
+			this.reload();
+		}
 	}
 	
 	WPGMZA.extend(WPGMZA.MarkerListing, WPGMZA.EventDispatcher);
@@ -388,7 +395,25 @@ jQuery(function($) {
 		
 		// Add success callback
 		params.success = function(response, textStatus, xhr) {
+			console.log('[WPGMZA] Marker listing AJAX success', {
+				hasResponse: !!response,
+				hasHTML: !!(response && response.html),
+				recordsFiltered: response ? response.recordsFiltered : 0,
+				overrideMarkerIDsCount: self.overrideMarkerIDs ? self.overrideMarkerIDs.length : 0
+			});
 			self.onAJAXResponse(response, textStatus, xhr);
+		};
+		
+		// Add error callback
+		params.error = function(xhr, textStatus, errorThrown) {
+			console.error('[WPGMZA] Marker listing AJAX error', {
+				status: xhr.status,
+				statusText: xhr.statusText,
+				textStatus: textStatus,
+				errorThrown: errorThrown,
+				responseText: xhr.responseText ? xhr.responseText.substring(0, 200) : null
+			});
+			self.map.showPreloader(false);
 		};
 		
 		return params;
@@ -396,6 +421,13 @@ jQuery(function($) {
 	
 	WPGMZA.MarkerListing.prototype.onAJAXResponse = function(response, textStatus, xhr)
 	{
+		console.log('[WPGMZA] onAJAXResponse called', {
+			hasResponse: !!response,
+			hasHTML: !!(response && response.html),
+			htmlLength: response && response.html ? response.html.length : 0,
+			recordsFiltered: response ? response.recordsFiltered : 0
+		});
+		
 		this.map.showPreloader(false);
 		
 		this.lastAJAXResponse = response;
@@ -504,6 +536,12 @@ jQuery(function($) {
 		
 		var route = $(this.element).attr("data-wpgmza-rest-api-route");
 		var params = this.getAJAXRequestParameters();
+		
+		console.log('[WPGMZA] reload() starting AJAX request', {
+			route: route,
+			overrideMarkerIDs: params.data.overrideMarkerIDs,
+			hasFilteringParams: !!params.data.filteringParams
+		});
 		
 		this.map.showPreloader(true);
 		
@@ -633,10 +671,27 @@ jQuery(function($) {
 	{
 		var self = this;
 		
+		console.log('[WPGMZA] onFilteringComplete called', {
+			showOnFilteringComplete: this.showOnFilteringComplete,
+			hasFilteringParams: !!(event && event.filteringParams),
+			hideAll: event && event.filteringParams ? event.filteringParams.hideAll : undefined,
+			filteredMarkersCount: event && event.filteredMarkers ? event.filteredMarkers.length : 0,
+			elementHidden: $(this.element).is(':hidden')
+		});
+		
 		if(this.showOnFilteringComplete)
 		{
-			$(this.element).show();
-			delete this.showOnFilteringComplete;
+			// Show or hide the element based on whether this is hideAll filtering
+			if(event.filteringParams && event.filteringParams.hideAll)
+			{
+				console.log('[WPGMZA] Hiding marker listing (hideAll: true)');
+				$(this.element).hide();
+			}
+			else
+			{
+				console.log('[WPGMZA] Showing marker listing (hideAll: false/undefined)');
+				$(this.element).show();
+			}
 		}
 		
 		this.overrideMarkerIDs = [];
@@ -650,6 +705,7 @@ jQuery(function($) {
 		// NB: Workaround for paginatejs not resetting, as it's not aware of what's going on with our data
 		this.pageOnPaginationReinit = 1;
 		
+		console.log('[WPGMZA] Calling reload() with', self.overrideMarkerIDs.length, 'marker IDs');
 		this.reload();
 	}
 	

@@ -121,6 +121,17 @@ jQuery(function($) {
 		var self = this;
 		var map = [];
 		
+		// If hide_before_search is enabled and this is the first search, fetch features now
+		if(this.map.settings.wpgmza_store_locator_hide_before_search == 1 && 
+		   !this.map.initialFetchCompleted && 
+		   event.filteredMarkers.length > 0)
+		{
+			console.log('[WPGMZA] ProMarkerFilter: First search with hide_before_search - fetching features now');
+			this.map.initialFetchCompleted = true;
+			this.map.fetchFeatures();
+			return; // Let the fetch complete and trigger filtering again
+		}
+		
 		event.filteredMarkers.forEach(function(data) {
 			map[data.id] = true;
 		});

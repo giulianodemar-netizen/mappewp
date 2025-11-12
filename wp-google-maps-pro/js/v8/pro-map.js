@@ -352,6 +352,14 @@ jQuery(function($) {
 	{
 		var self = this;
 		
+		// Don't fetch features on initial load if hide_before_search is enabled
+		// Features will be fetched after first search via marker filter
+		if(this.settings.wpgmza_store_locator_hide_before_search == 1 && !this.initialFetchCompleted)
+		{
+			console.log('[WPGMZA] ProMap: Skipping initial fetchFeatures because hide_before_search is enabled');
+			return;
+		}
+		
 		if(this.settings.only_load_markers_within_viewport)
 		{
 			// NB: Force REST pull and wait for idle event, the bounds aren't available until the map has initialised. XML pull won't work with this feature.
@@ -367,6 +375,7 @@ jQuery(function($) {
 		}
 		
 		WPGMZA.Map.prototype.fetchFeatures.apply(this, arguments);
+		this.initialFetchCompleted = true;
 	}
 	
 	WPGMZA.ProMap.prototype.onMarkersFetched = function(data, expectMoreBatches)
