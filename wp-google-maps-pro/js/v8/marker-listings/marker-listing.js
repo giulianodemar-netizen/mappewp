@@ -635,11 +635,14 @@ jQuery(function($) {
 		
 		if(this.showOnFilteringComplete)
 		{
-			// Only show the element if this is not the initial hideAll filtering
-			if(!event.filteringParams || !event.filteringParams.hideAll)
+			// Show or hide the element based on whether this is hideAll filtering
+			if(event.filteringParams && event.filteringParams.hideAll)
+			{
+				$(this.element).hide();
+			}
+			else
 			{
 				$(this.element).show();
-				delete this.showOnFilteringComplete;
 			}
 		}
 		
