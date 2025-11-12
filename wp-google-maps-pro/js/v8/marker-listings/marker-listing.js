@@ -48,8 +48,11 @@ jQuery(function($) {
 		});
 		
 		if(map.settings.wpgmza_store_locator_hide_before_search == 1) {
+			console.log('[WPGMZA] Marker listing initialized with hide_before_search enabled - will NOT load all markers initially');
 			this.showOnFilteringComplete = true;
 			$(this.element).hide();
+		} else {
+			console.log('[WPGMZA] Marker listing initialized - will load all markers');
 		}
 
 		
@@ -77,7 +80,11 @@ jQuery(function($) {
 			
 		});
 		
-		this.reload();
+		// Only load markers initially if hide_before_search is not enabled
+		// With hide_before_search, the listing will load on first search via onFilteringComplete
+		if(!map.settings.wpgmza_store_locator_hide_before_search) {
+			this.reload();
+		}
 	}
 	
 	WPGMZA.extend(WPGMZA.MarkerListing, WPGMZA.EventDispatcher);
