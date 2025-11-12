@@ -635,8 +635,12 @@ jQuery(function($) {
 		
 		if(this.showOnFilteringComplete)
 		{
-			$(this.element).show();
-			delete this.showOnFilteringComplete;
+			// Only show the element if this is not the initial hideAll filtering
+			if(!event.filteringParams || !event.filteringParams.hideAll)
+			{
+				$(this.element).show();
+				delete this.showOnFilteringComplete;
+			}
 		}
 		
 		this.overrideMarkerIDs = [];
